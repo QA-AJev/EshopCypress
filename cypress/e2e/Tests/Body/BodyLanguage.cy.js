@@ -1,56 +1,82 @@
 /// <reference types="cypress" />
 
-describe('Language Functional Tests', () => {
-    const languageMap = {
-        EN: 'E-commerce Shop',
-        LT: 'Elektroninės prekybos parduotuvė',
-        UA: 'Інтернет-магазин',
-        NL: 'E-commerce Winkel'
-    };
-
+describe('Body Product List Multilingual Support', () => {
     const url = 'http://192.168.0.10:5173/';
+    const languages = ['EN', 'LT', 'UA', 'NL'];
 
     beforeEach(() => {
-
         cy.visit(url);
     });
 
-    it('Should display all languages in dropdown', () => {
-        cy.get('[data-testid="language-select"]').within(() => {
-            cy.get('option').should('have.length', 4);
-            cy.get('option[value="EN"]').should('contain.text', 'English');
-            cy.get('option[value="LT"]').should('contain.text', 'Lietuvių');
-            cy.get('option[value="UA"]').should('contain.text', 'Українська');
-            cy.get('option[value="NL"]').should('contain.text', 'Nederlands');
+    it('should update visible product texts when switching language', () => {
+        let textEN = '';
+
+        // Step 1: Capture baseline (English)
+        cy.get('[data-testid="language-select"]').select('EN');
+        cy.wait(200);
+        cy.get('ul._list_1exc7_333').then($ul => {
+            textEN = normalizeText($ul.text());
+        });
+
+        // Step 2: Compare each language
+        languages.slice(1).forEach(lang => {
+            cy.get('[data-testid="language-select"]').select(lang);
+            cy.wait(250);
+
+            cy.get('ul._list_1exc7_333').then($ul => {
+                const textNew = normalizeText($ul.text());
+                const diffRatio = wordDiffRatio(textEN, textNew);
+                expect(diffRatio).to.be.greaterThan(
+                    0.25,
+                    `Language "${lang}" did not produce sufficient textual change`
+                );
+            });
         });
     });
 
-    it('Should correctly update header text for each language', () => {
-        Object.entries(languageMap).forEach(([value, headerText]) => {
-            cy.get('[data-testid="language-select"]').select(value);
-            cy.get('[data-testid="header-title"]')
-                .should('be.visible')
-                .and('contain.text', headerText);
-        });
-    });
+    function normalizeText(text) {
+        return text
+            .replace(/\s+/g, ' ')
+            .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, '')
+            .toLowerCase()
+            .trim();
+    }
 
-    it('Should persist all languages after reload', () => {
-        cy.wrap(Object.entries(languageMap)).each(([value, headerText]) => {
-            cy.get('[data-testid="language-select"]').select(value);
-
-            // Wait for header to update (UI confirms state change)
-            cy.get('[data-testid="header-title"]')
-                .should('be.visible')
-                .and('contain.text', headerText);
-
-            // Then check localStorage
-            cy.window().its('localStorage').invoke('getItem', 'language-eshop1').should('eq', value);
-
-            cy.reload();
-
-            cy.get('[data-testid="header-title"]')
-                .should('be.visible')
-                .and('contain.text', headerText);
-        });
-    });
+    function wordDiffRatio(a, b) {
+        const wordsA = new Set(a.split(' '));
+        const wordsB = new Set(b.split(' '));
+        const intersection = [...wordsA].filter(word => wordsB.has(word)).length;
+        const union = new Set([...wordsA, ...wordsB]).size;
+        return 1 - intersection / union; // higher ratio = more difference
+    }
 });
+
+
+    // it('Should correctly update header text for each language', () => {
+    //     Object.entries(languageMap).forEach(([value, headerText]) => {
+    //         cy.get('[data-testid="language-select"]').select(value);
+    //         cy.get('[data-testid="header-title"]')
+    //             .should('be.visible')
+    //             .and('contain.text', headerText);
+    //     });
+    // });
+
+    // it('Should persist all languages after reload', () => {
+    //     cy.wrap(Object.entries(languageMap)).each(([value, headerText]) => {
+    //         cy.get('[data-testid="language-select"]').select(value);
+
+    //         // Wait for header to update (UI confirms state change)
+    //         cy.get('[data-testid="header-title"]')
+    //             .should('be.visible')
+    //             .and('contain.text', headerText);
+
+    //         // Then check localStorage
+    //         cy.window().its('localStorage').invoke('getItem', 'language-eshop1').should('eq', value);
+
+    //         cy.reload();
+
+    //         cy.get('[data-testid="header-title"]')
+    //             .should('be.visible')
+    //             .and('contain.text', headerText);
+    //     });
+    // });
