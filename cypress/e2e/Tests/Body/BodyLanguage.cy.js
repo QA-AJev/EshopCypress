@@ -50,33 +50,3 @@ describe('Body Product List Multilingual Support', () => {
         return 1 - intersection / union; // higher ratio = more difference
     }
 });
-
-
-    // it('Should correctly update header text for each language', () => {
-    //     Object.entries(languageMap).forEach(([value, headerText]) => {
-    //         cy.get('[data-testid="language-select"]').select(value);
-    //         cy.get('[data-testid="header-title"]')
-    //             .should('be.visible')
-    //             .and('contain.text', headerText);
-    //     });
-    // });
-
-    // it('Should persist all languages after reload', () => {
-    //     cy.wrap(Object.entries(languageMap)).each(([value, headerText]) => {
-    //         cy.get('[data-testid="language-select"]').select(value);
-
-    //         // Wait for header to update (UI confirms state change)
-    //         cy.get('[data-testid="header-title"]')
-    //             .should('be.visible')
-    //             .and('contain.text', headerText);
-
-    //         // Then check localStorage
-    //         cy.window().its('localStorage').invoke('getItem', 'language-eshop1').should('eq', value);
-
-    //         cy.reload();
-
-    //         cy.get('[data-testid="header-title"]')
-    //             .should('be.visible')
-    //             .and('contain.text', headerText);
-    //     });
-    // });
